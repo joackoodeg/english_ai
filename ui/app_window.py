@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, font
 from config import *
-from core.chat_manager import handle_user_input
+from core.chat_manager import handle_user_input, suggest_topic, reset_conversation
 # Importar ctypes para la personalización de Windows
 from ctypes import windll, byref, sizeof, c_int
 
@@ -108,9 +108,46 @@ def start_app():
     chat_area.tag_config("correction", foreground="#FFD700")  # Gold for corrections
     chat_area.tag_config("separator", foreground="#444444")  # For separators
     
+    # Control buttons frame
+    control_frame = tk.Frame(main_frame, bg=BG_COLOR)
+    control_frame.grid(row=2, column=0, sticky="ew", pady=(0, 5))
+    
+    # Helper Buttons
+    suggest_button = tk.Button(
+        control_frame, 
+        text="[ SUGGEST TOPIC ]", 
+        command=lambda: suggest_topic(chat_area), 
+        font=(FONT_FAMILY, 8, "bold"), 
+        bg=BUTTON_BG, 
+        fg=TEXT_COLOR, 
+        activebackground="#333333",
+        activeforeground=TEXT_COLOR,
+        relief="flat", 
+        bd=1,
+        padx=5,
+        pady=1
+    )
+    suggest_button.pack(side=tk.LEFT, padx=(0, 5))
+    
+    reset_button = tk.Button(
+        control_frame, 
+        text="[ RESET CHAT ]", 
+        command=lambda: reset_conversation(chat_area), 
+        font=(FONT_FAMILY, 8, "bold"), 
+        bg=BUTTON_BG, 
+        fg=TEXT_COLOR, 
+        activebackground="#333333",
+        activeforeground=TEXT_COLOR,
+        relief="flat", 
+        bd=1,
+        padx=5,
+        pady=1
+    )
+    reset_button.pack(side=tk.LEFT)
+    
     # Input area with ASCII styling
     input_frame = tk.Frame(main_frame, bg=BG_COLOR)
-    input_frame.grid(row=2, column=0, sticky="ew", pady=(5, 0))
+    input_frame.grid(row=3, column=0, sticky="ew", pady=(5, 0))
     input_frame.grid_columnconfigure(1, weight=1)  # Entry gets all extra space
     
     # Stylized prompt symbol
@@ -181,7 +218,12 @@ def start_app():
     
     chat_area.insert(tk.END, banner + "\n", "system")
     chat_area.insert(tk.END, "System initialized and ready for interaction.\n", "system")
-    chat_area.insert(tk.END, "Type your English text below to check grammar and get AI responses.\n\n", "system")
+    chat_area.insert(tk.END, "Type your English text below to check grammar and practice conversation.\n", "system")
+    chat_area.insert(tk.END, "Use the [SUGGEST TOPIC] button if you need conversation ideas.\n\n", "system")
+    
+    # Add an initial topic suggestion
+    suggest_topic(chat_area)
+    
     chat_area.config(state=tk.DISABLED)
     
     # Enable dark mode title bar on Windows if possible

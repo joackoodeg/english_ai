@@ -14,5 +14,5 @@ HIGHLIGHT_COLOR = "#00CCFF"  # Bright cyan for AI responses
 SYSTEM_COLOR = "#FFD700"  # Gold for system messages
 # IA local
 # alt: tinyllama / gemma:2b
-OLLAMA_MODEL = "phi"
+OLLAMA_MODEL = "gemma:2b"
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
