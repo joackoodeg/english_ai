@@ -107,6 +107,7 @@ def start_app():
     chat_area.tag_config("ai", foreground=HIGHLIGHT_COLOR)
     chat_area.tag_config("correction", foreground="#FFD700")  # Gold for corrections
     chat_area.tag_config("separator", foreground="#444444")  # For separators
+    chat_area.tag_config("waiting", foreground="#FF6600")    # Orange for waiting messages
     
     # Control buttons frame
     control_frame = tk.Frame(main_frame, bg=BG_COLOR)
@@ -145,6 +146,16 @@ def start_app():
     )
     reset_button.pack(side=tk.LEFT)
     
+    # Status indicator for processing
+    processing_label = tk.Label(
+        control_frame,
+        text="",
+        font=(FONT_FAMILY, 8, "bold"),
+        fg="#FF6600",  # Orange for processing
+        bg=BG_COLOR
+    )
+    processing_label.pack(side=tk.RIGHT, padx=5)
+    
     # Input area with ASCII styling
     input_frame = tk.Frame(main_frame, bg=BG_COLOR)
     input_frame.grid(row=3, column=0, sticky="ew", pady=(5, 0))
@@ -175,12 +186,30 @@ def start_app():
     )
     user_input.grid(row=0, column=1, sticky="ew", padx=(0, 5))
     
-    # Function to handle sending messages
+    # Function to handle sending messages with UI feedback
     def send_message():
         message = user_input.get().strip()
         if message:
-            handle_user_input(message, chat_area)
+            # Clear the input field immediately
             user_input.delete(0, tk.END)
+            
+            # Disable input and buttons while processing
+            user_input.config(state=tk.DISABLED)
+            send_button.config(state=tk.DISABLED)
+            processing_label.config(text="[ PROCESSING... ]")
+            
+            # Reset UI after handling the input
+            def reset_ui():
+                user_input.config(state=tk.NORMAL)
+                send_button.config(state=tk.NORMAL)
+                processing_label.config(text="")
+                user_input.focus_set()
+            
+            # Process the message
+            handle_user_input(message, chat_area)
+            
+            # Schedule UI reset to happen after message is handled
+            root.after(100, reset_ui)
     
     # Improved send button with ASCII styling
     send_button = tk.Button(

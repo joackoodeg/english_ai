@@ -3,6 +3,7 @@ from core.grammar_checker import correct_text
 from core.prompt_loader import load_starters
 import tkinter as tk
 import random
+import time
 
 # Initialize with conversation starters and a system prompt
 STARTERS = load_starters()
@@ -34,8 +35,7 @@ def handle_user_input(message, chat_area):
     chat_area.yview("end")
     chat_area.update()
 
-    # Show checking indicator
-    processing_pos = chat_area.index("end-1c")
+    # Show checking indicator on a new line
     chat_area.insert("end", "[Checking grammar...]\n", "system")
     chat_area.yview("end")
     chat_area.update()
@@ -43,13 +43,9 @@ def handle_user_input(message, chat_area):
     # Get grammar correction
     corrected, issues = correct_text(message)
 
-    # Remove processing indicator
-    chat_area.delete(processing_pos, "end")
-    chat_area.update()
-    
-    # Display corrections with simpler styling
+    # Display corrections with simpler styling - always on a new line
     if corrected != message:
-        chat_area.insert("end", "GRAMMAR: ", "correction")
+        chat_area.insert("end", "GRAMMAR:\n", "correction")
         chat_area.insert("end", f"{corrected}\n", "correction")
         
         if issues:
@@ -63,8 +59,9 @@ def handle_user_input(message, chat_area):
     chat_area.yview("end")
     chat_area.update()
 
-    # Thinking animation
+    # AI waiting message on a new line
     chat_area.insert("end", "AI: ", "system")
+    chat_area.insert("end", "[Thinking...]\n", "system")
     chat_area.yview("end")
     chat_area.update()
     
@@ -77,6 +74,9 @@ def handle_user_input(message, chat_area):
     # Get AI response
     ai_response = get_ai_response(prompt)
     chat_history += f"\nAI: {ai_response}"
+    
+    # Remove the "Thinking..." line
+    chat_area.delete("end-2l", "end-1l")
     
     # Show the AI response with simplified styling
     chat_area.insert("end", f"{ai_response.strip()}\n", "ai")
