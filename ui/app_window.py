@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import scrolledtext, font
 from config import *
 from core.chat_manager import handle_user_input
+# Importar ctypes para la personalización de Windows
+from ctypes import windll, byref, sizeof, c_int
 
 def start_app():
     root = tk.Tk()
@@ -15,57 +17,71 @@ def start_app():
     
     # Create main container frame
     main_frame = tk.Frame(root, bg=BG_COLOR)
-    main_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+    main_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
     main_frame.grid_rowconfigure(1, weight=1)  # Chat area gets the weight
     main_frame.grid_columnconfigure(0, weight=1)
     
-    # Add a compact header
-    header_frame = tk.Frame(main_frame, bg=BG_COLOR, height=25)
+    # Add a stylized header
+    header_frame = tk.Frame(main_frame, bg=BG_COLOR, height=30)
     header_frame.grid(row=0, column=0, sticky="ew")
     header_frame.grid_columnconfigure(0, weight=1)  # Push status to right
     
-    # Title as a small label on the left
+    # Title with ASCII styling
+    title_text = f"┌─── {APP_TITLE} ───┐"
     title_label = tk.Label(
         header_frame,
-        text=APP_TITLE,
-        font=(FONT_FAMILY, 10, "bold"),
+        text=title_text,
+        font=(FONT_FAMILY, 12, "bold"),
         fg=SYSTEM_COLOR,
         bg=BG_COLOR,
         anchor="w",
     )
-    title_label.grid(row=0, column=0, sticky="w", padx=5, pady=2)
+    title_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
     
-    # Status indicator on the right
+    # Status indicator on the right with enhanced styling
     status_frame = tk.Frame(header_frame, bg=BG_COLOR)
     status_frame.grid(row=0, column=1, sticky="e")
     
-    status_indicator = tk.Canvas(status_frame, width=10, height=10, bg=BG_COLOR, highlightthickness=0)
-    status_indicator.create_oval(2, 2, 8, 8, fill="#00FF00")
-    status_indicator.pack(side=tk.LEFT, padx=2)
-    
+    # ASCII-style status
+    status_text = "[ ONLINE ]"
     status_label = tk.Label(
         status_frame,
-        text="ONLINE",
-        font=(FONT_FAMILY, 8),
+        text=status_text,
+        font=(FONT_FAMILY, 10, "bold"),
         fg="#00FF00",
         bg=BG_COLOR
     )
-    status_label.pack(side=tk.LEFT, padx=2)
+    status_label.pack(side=tk.RIGHT, padx=5)
     
-    # Thin separator
-    separator = tk.Frame(main_frame, height=1, bg="#444444")
-    separator.grid(row=0, column=0, sticky="ews", pady=(25, 0))
+    # ASCII-style separator
+    separator_text = "═" * 80  # Unicode box drawing character
+    separator = tk.Label(
+        main_frame,
+        text=separator_text,
+        font=(FONT_FAMILY, 8),
+        fg="#444444",
+        bg=BG_COLOR
+    )
+    separator.grid(row=0, column=0, sticky="ews", pady=(30, 0))
     
-    # Chat display area with border
+    # Chat display area with stylized border
     chat_container = tk.Frame(
         main_frame, 
         bg=BG_COLOR,
         highlightbackground="#444444",
-        highlightthickness=1
+        highlightthickness=1,
+        bd=0
     )
-    chat_container.grid(row=1, column=0, sticky="nsew", pady=5)
+    chat_container.grid(row=1, column=0, sticky="nsew", pady=10)
     chat_container.grid_rowconfigure(0, weight=1)
     chat_container.grid_columnconfigure(0, weight=1)
+    
+    # Custom scrollbar styling
+    scrollbar_style = {
+        "troughcolor": ENTRY_BG,
+        "background": BUTTON_BG,
+        "activebackground": TEXT_COLOR
+    }
     
     chat_area = scrolledtext.ScrolledText(
         chat_container, 
@@ -76,35 +92,39 @@ def start_app():
         insertbackground=TEXT_COLOR,
         relief="flat", 
         bd=0,
-        padx=10,
-        pady=10
+        padx=15,
+        pady=15
     )
     chat_area.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
     chat_area.config(state=tk.DISABLED)
     
-    # Style text tags
+    # Apply scrollbar styling
+    chat_area.vbar.config(**scrollbar_style)
+    
+    # Style text tags with improved colors
     chat_area.tag_config("user", foreground=TEXT_COLOR, font=(FONT_FAMILY, FONT_SIZE, "bold"))
     chat_area.tag_config("system", foreground=SYSTEM_COLOR)
     chat_area.tag_config("ai", foreground=HIGHLIGHT_COLOR)
     chat_area.tag_config("correction", foreground="#FFD700")  # Gold for corrections
+    chat_area.tag_config("separator", foreground="#444444")  # For separators
     
-    # Full-width input area at bottom
+    # Input area with ASCII styling
     input_frame = tk.Frame(main_frame, bg=BG_COLOR)
-    input_frame.grid(row=2, column=0, sticky="ew", pady=(0, 5))
+    input_frame.grid(row=2, column=0, sticky="ew", pady=(5, 0))
     input_frame.grid_columnconfigure(1, weight=1)  # Entry gets all extra space
     
-    # Compact prompt symbol
+    # Stylized prompt symbol
     prompt_label = tk.Label(
         input_frame,
-        text=">",
+        text="[ > ]",
         font=(FONT_FAMILY, FONT_SIZE, "bold"),
-        fg=TEXT_COLOR,
+        fg=SYSTEM_COLOR,
         bg=BG_COLOR,
-        width=1
+        width=4
     )
-    prompt_label.grid(row=0, column=0, sticky="w")
+    prompt_label.grid(row=0, column=0, sticky="w", padx=(0, 5))
     
-    # Full-width input field
+    # Full-width input field with better styling
     user_input = tk.Entry(
         input_frame, 
         font=(FONT_FAMILY, FONT_SIZE), 
@@ -116,7 +136,7 @@ def start_app():
         highlightthickness=1,
         insertwidth=2
     )
-    user_input.grid(row=0, column=1, sticky="ew", padx=(2, 5))
+    user_input.grid(row=0, column=1, sticky="ew", padx=(0, 5))
     
     # Function to handle sending messages
     def send_message():
@@ -125,21 +145,21 @@ def start_app():
             handle_user_input(message, chat_area)
             user_input.delete(0, tk.END)
     
-    # Compact send button
+    # Improved send button with ASCII styling
     send_button = tk.Button(
         input_frame, 
-        text="SEND", 
+        text="[ SEND ]", 
         command=send_message, 
         font=(FONT_FAMILY, 10, "bold"), 
         bg=BUTTON_BG, 
         fg=TEXT_COLOR, 
         activebackground="#333333",
         activeforeground=TEXT_COLOR,
-        relief="raised", 
+        relief="flat", 
         bd=1,
-        padx=5,
-        pady=1,
-        width=6
+        padx=8,
+        pady=2,
+        width=8
     )
     send_button.grid(row=0, column=2, padx=(0, 0))
     
@@ -149,9 +169,31 @@ def start_app():
     # Set focus to input field
     user_input.focus_set()
     
-    # Add startup text
+    # Add improved startup text with simple ASCII banner
     chat_area.config(state=tk.NORMAL)
-    chat_area.insert(tk.END, f"{APP_TITLE} - Ready\n\n", "system")
+    
+    # Simplified ASCII banner
+    banner = """
+    ===============================================
+                ENGLISH AI TERMINAL                
+    ===============================================
+    """
+    
+    chat_area.insert(tk.END, banner + "\n", "system")
+    chat_area.insert(tk.END, "System initialized and ready for interaction.\n", "system")
+    chat_area.insert(tk.END, "Type your English text below to check grammar and get AI responses.\n\n", "system")
     chat_area.config(state=tk.DISABLED)
+    
+    # Enable dark mode title bar on Windows if possible
+    try:
+        from ctypes import windll
+        windll.dwmapi.DwmSetWindowAttribute(
+            root.winfo_id(), 
+            20,  # DWMWA_USE_IMMERSIVE_DARK_MODE
+            byref(c_int(1)), 
+            sizeof(c_int)
+        )
+    except:
+        pass  # Silently fail if not on Windows or if the call fails
     
     root.mainloop()
