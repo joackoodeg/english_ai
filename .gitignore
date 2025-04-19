@@ -1,0 +1,53 @@
+# Entorno virtual
+venv/
+ENV/
+env/
+.venv/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de logs
+*.log
+
+# Configuración local
+*.env
+*.local
+*.DS_Store
+
+# Archivos temporales del sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de configuración de IDEs y editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de caché de LanguageTool
+language_tool_python/downloaded/*
+!language_tool_python/downloaded/.gitkeep
+
+# Instaladores, ejecutables
+*.exe
+*.bat
+*.msi
+
+# Datos del usuario
+*.sqlite3
+db.sqlite3
+*.db
+
+# Otros temporales
+*.tmp
+*.bak
+*.swp
+*.lock
+
+# Git
+.git/
+
