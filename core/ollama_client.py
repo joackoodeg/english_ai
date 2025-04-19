@@ -16,14 +16,17 @@ def get_ai_response(prompt: str) -> str:
         # Start time to calculate response time
         start_time = time.time()
         
+        # Enhanced prompt to emphasize listening to the user
+        enhanced_prompt = prompt + "\n\nImportant: Carefully read what the user just said and acknowledge it directly before continuing the conversation."
+        
         # Create a more complete request with parameters to guide the conversation
         response = requests.post(OLLAMA_API_URL, json={
             "model": OLLAMA_MODEL,
-            "prompt": prompt,
+            "prompt": enhanced_prompt,
             "stream": False,
             # Add parameters to make responses more conversational and engaging
             "options": {
-                "temperature": 0.8,  # Higher temperature for more creative responses
+                "temperature": 0.7,  # Slightly lower temperature for more coherent responses
                 "top_p": 0.9,        # Nucleus sampling for more diverse text
                 "top_k": 40,         # Consider more token options
                 "num_predict": 300,  # Allow for longer responses
@@ -40,7 +43,7 @@ def get_ai_response(prompt: str) -> str:
         
         # If response is too short, retry with a more direct prompt
         if len(ai_response.split()) < 10:
-            retry_prompt = prompt + "\n\nPlease provide a more detailed response and ask a follow-up question to keep the conversation going."
+            retry_prompt = prompt + "\n\nPlease provide a detailed response that directly addresses what the user just said."
             return get_ai_response(retry_prompt)
             
         return ai_response
