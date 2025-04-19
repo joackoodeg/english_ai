@@ -1,24 +1,34 @@
 from core.ollama_client import get_ai_response
-from core.grammar_checker import correct_text
+from core.grammar_checker import correct_text, get_alternative_expressions
 from core.prompt_loader import load_starters
 import tkinter as tk
 import random
 import time
 
-# Initialize with conversation starters and a system prompt
+# Initialize with conversation starters and an enhanced system prompt
 STARTERS = load_starters()
 SYSTEM_PROMPT = """
-You are an English learning assistant. Your job is to:
+You are an advanced English learning assistant. Your job is to:
 1. Always respond in English, even if the user writes in another language
 2. LISTEN CAREFULLY to what the user says and acknowledge their statements before responding
 3. RESPECT the user's preferences and opinions - if they say they don't like something, acknowledge it
 4. Keep the conversation going by asking engaging follow-up questions about topics the user IS interested in
-5. Gently correct any English errors in the user's messages
+5. Gently but thoroughly correct English errors in the user's messages:
+   - Focus on verb tense consistency
+   - Suggest more natural-sounding expressions
+   - Provide simple explanations for corrections
 6. Use simple, clear language appropriate for language learners
 7. Introduce new vocabulary and idioms with explanations when appropriate
 8. Encourage the user to express themselves and practice more
 9. Suggest alternative topics if the conversation stalls or if the user expresses disinterest in the current topic
 10. Be patient, encouraging, and supportive
+
+Important teaching techniques:
+- When you suggest a better expression, explain WHY it's better
+- Identify patterns in the user's errors to provide focused help
+- Praise good language use to reinforce learning
+- Use examples to illustrate correct usage
+- If appropriate, teach common collocations and context-specific vocabulary
 
 Remember that your main goal is to keep the conversation flowing naturally while helping
 the user improve their English skills. Always validate what they say before moving on.
@@ -43,7 +53,8 @@ def detect_disinterest(message):
         "don't like", "dont like", "not interested", 
         "boring", "don't want to", "dont want to",
         "not my thing", "hate", "dislike",
-        "don't enjoy", "dont enjoy"
+        "don't enjoy", "dont enjoy", "don't care",
+        "dont care", "let's change", "lets change"
     ]
     
     # Check if any disinterest phrase is in the message
@@ -54,7 +65,8 @@ def detect_disinterest(message):
     if is_disinterested:
         # Common topics that might be mentioned
         topics = ["book", "movie", "music", "sport", "travel", "food", 
-                 "hobby", "pet", "vacation", "weekend", "season"]
+                 "hobby", "pet", "vacation", "weekend", "season",
+                 "politics", "weather", "technology", "history", "news"]
         
         # Find which topic they mentioned
         for topic in topics:
@@ -93,6 +105,56 @@ def suggest_topic(chat_area, avoid_topic=None):
     chat_area.config(state="disabled")
     chat_area.yview("end")
 
+def format_learning_feedback(categorized_issues, expression_suggestions):
+    """
+    Format the learning feedback in a structured, educational way
+    
+    Args:
+        categorized_issues: Dictionary of issues by category
+        expression_suggestions: List of alternative expressions
+        
+    Returns:
+        Formatted feedback string
+    """
+    feedback = []
+    
+    # Add verb tense feedback if present
+    if categorized_issues['VERB_TENSE']:
+        feedback.append("VERB TENSE ISSUES:")
+        for issue in categorized_issues['VERB_TENSE'][:3]:  # Limit to top 3
+            feedback.append(f" • {issue}")
+    
+    # Add expression feedback if present
+    if categorized_issues['EXPRESSION'] or expression_suggestions:
+        feedback.append("\nEXPRESSION IMPROVEMENTS:")
+        
+        # Add categorized expression issues
+        for issue in categorized_issues['EXPRESSION'][:2]:  # Limit to top 2
+            feedback.append(f" • {issue}")
+            
+        # Add our custom expression suggestions
+        for orig, alt in expression_suggestions[:3]:  # Limit to top 3
+            feedback.append(f" • Consider using '{alt}' instead of '{orig}' for more natural expression")
+    
+    # Add grammar feedback if present
+    if categorized_issues['GRAMMAR']:
+        feedback.append("\nGRAMMAR NOTES:")
+        for issue in categorized_issues['GRAMMAR'][:3]:  # Limit to top 3
+            feedback.append(f" • {issue}")
+    
+    # Add a learning tip based on the most common issue category
+    most_issues = max(categorized_issues.items(), key=lambda x: len(x[1]) if isinstance(x[1], list) else 0)
+    category = most_issues[0]
+    
+    if category == 'VERB_TENSE' and categorized_issues['VERB_TENSE']:
+        feedback.append("\nLEARNING TIP: Pay attention to keeping your verb tenses consistent throughout your sentences. If you start in past tense, continue in past tense unless there's a specific reason to change.")
+    elif category == 'EXPRESSION' and (categorized_issues['EXPRESSION'] or expression_suggestions):
+        feedback.append("\nLEARNING TIP: Native speakers often use specific word combinations (collocations). Learning these will make your English sound more natural.")
+    elif category == 'GRAMMAR' and categorized_issues['GRAMMAR']:
+        feedback.append("\nLEARNING TIP: Focus on the structure of your sentences. English often follows Subject-Verb-Object order.")
+    
+    return "\n".join(feedback) if feedback else "[✓ Your English is excellent!]"
+
 def handle_user_input(message, chat_area):
     global chat_history
 
@@ -105,25 +167,27 @@ def handle_user_input(message, chat_area):
     chat_area.update()
 
     # Show checking indicator on a new line
-    chat_area.insert("end", "[Checking grammar...]\n", "system")
+    chat_area.insert("end", "[Analyzing language...]\n", "system")
     chat_area.yview("end")
     chat_area.update()
     
-    # Get grammar correction
-    corrected, issues = correct_text(message)
+    # Get enhanced grammar correction
+    corrected, issues, categorized_issues = correct_text(message)
+    
+    # Get alternative expression suggestions
+    expression_suggestions = get_alternative_expressions(message)
 
-    # Display corrections with simpler styling - always on a new line
-    if corrected != message:
-        chat_area.insert("end", "GRAMMAR:\n", "correction")
-        chat_area.insert("end", f"{corrected}\n", "correction")
+    # Display corrections with better formatting
+    if corrected != message or expression_suggestions:
+        chat_area.insert("end", "CORRECTION:\n", "correction")
+        chat_area.insert("end", f"{corrected}\n\n", "correction")
         
-        if issues:
-            chat_area.insert("end", "ISSUES FOUND:\n", "correction")
-            for i in issues:
-                chat_area.insert("end", f" • {i}\n", "correction")
-        chat_area.insert("end", "\n", "system")
+        # Display comprehensive feedback
+        learning_feedback = format_learning_feedback(categorized_issues, expression_suggestions)
+        chat_area.insert("end", "LEARNING NOTES:\n", "correction") 
+        chat_area.insert("end", f"{learning_feedback}\n\n", "correction")
     else:
-        chat_area.insert("end", "[✓ Grammar OK]\n\n", "correction")
+        chat_area.insert("end", "[✓ Your English looks good!]\n\n", "correction")
     
     chat_area.yview("end")
     chat_area.update()
@@ -143,22 +207,35 @@ def handle_user_input(message, chat_area):
     chat_area.yview("end")
     chat_area.update()
     
-    # Format chat history with a clearer structure
-    last_message = f"User's most recent message: \"{corrected}\". "
+    # Prepare instruction for the AI based on the corrections and user's intent
+    instruction = "Please respond to the user. "
     
+    # Add information about corrections made
+    if corrected != message:
+        instruction += "I've corrected some grammar issues in their message. "
+    
+    if expression_suggestions:
+        instruction += "I've suggested some more natural expressions. "
+    
+    # Add information about most common issue category for focused help
+    most_issues = max(categorized_issues.items(), key=lambda x: len(x[1]) if isinstance(x[1], list) else 0)
+    category, issues_list = most_issues
+    
+    if issues_list:
+        instruction += f"Their most common issue is with {category.lower().replace('_', ' ')}. Please subtly incorporate correct usage of this in your response. "
+    
+    # Add disinterest information
     if is_disinterested:
-        last_message += f"The user has expressed they DON'T LIKE {topic_to_avoid if topic_to_avoid else 'the current topic'}. "
-        last_message += "Acknowledge this and change the subject to something different."
-    else:
-        last_message += "Make sure to respond directly to this."
+        instruction += f"The user has expressed they DON'T LIKE {topic_to_avoid if topic_to_avoid else 'the current topic'}. Acknowledge this and change the subject to something different. "
     
-    # Update chat history with corrected text and emphasize the current message
+    # Format chat history with a clearer structure
+    last_message = f"User's message: \"{corrected}\". {instruction} Respond conversationally and end with a question to keep the conversation going."
+    
+    # Update chat history with corrected text
     chat_history += f"\nUser: {corrected}"
     
-    # Add a prompt to encourage better understanding and response
-    prompt = chat_history + f"\n\n{last_message}\nRespond conversationally and ask a follow-up question about something the user might be interested in."
-    
-    # Get AI response
+    # Get AI response with enhanced prompting
+    prompt = chat_history + f"\n\n{last_message}"
     ai_response = get_ai_response(prompt)
     chat_history += f"\nAI: {ai_response}"
     
