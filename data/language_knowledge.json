@@ -1,0 +1,33 @@
+{
+  "common_errors": {
+    "OTHER": {
+      "hi, i want to expand my vocabulary": {
+        "count": 4,
+        "contexts": [
+          "hi, i want to expand my vocabulary"
+        ]
+      }
+    }
+  },
+  "learned_vocabulary": {
+    "expand": {
+      "definition": "A word that means 'expand'",
+      "example": "I learned the word 'expand' today.",
+      "tags": [
+        "uncommon_word"
+      ],
+      "date_added": "2025-04-19 22:50:12"
+    },
+    "vocabulary": {
+      "definition": "A word that means 'vocabulary'",
+      "example": "I learned the word 'vocabulary' today.",
+      "tags": [
+        "uncommon_word"
+      ],
+      "date_added": "2025-04-19 22:50:12"
+    }
+  },
+  "error_patterns": {},
+  "idioms_learned": {},
+  "pronunciation_challenges": {}
+}
